@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+path = "./data/realest.csv"
+
+class AnalysisDataAndFitLinearRegression:
+
+    def __init__(self):
+        self.version = 1
+        self.path = path
+
+    def analyse_and_fit_lrm(self,path):
+        # a path to a dataset is "./data/realest.csv"
+        # dataset can be loaded by uncommenting the line bellow
+        # data = pd.read_csv(path)
+        data = pd.read_csv(path)
+
+        Data = data
+        #Data = Data[Data['Bathroom']>=2 & Data['Bedroom']>=4]
+        Data =  Data[(Data['Bathroom']==2) & (Data['Bedroom']==4)]
+        #Data = Data[Data['Bedroom']>=4]
+        #Data_grp = Data.groupby(['Bathroom','Bedroom'])
+        #Data  = pd.DataFrame(Data.dropna())
+        TAX = Data['Tax']
+        Mean = int(TAX.mean())
+        Med = int(TAX.median())
+        STD = int(TAX.std())
+        MIN = int(TAX.min())
+        MAX = int(TAX.max())
+        statistics = [Mean,STD,Med,MIN,MAX]
+
+        Data1 = data
+        Data1 = Data1[Data1['Space']>800]
+        Data1 = Data1.sort_values(by='Price',ascending=False)
+        data_frame = Data1
+
+        Data2 = data
+        q4 = Data2['Lot'].quantile(0.25)
+        q5 = Data2['Lot'].quantile(0.5)
+        Data2 = Data2[Data2['Lot']>=q5]
+        
+        number_of_observations = Data2.shape[0]
+
+        summary_dict = {'statistics':statistics,'data_frame':data_frame,
+        'number_of_observations':number_of_observations}
+
+        data = self.__listwise_deletion(data)
+        Price = data['Price']
+        data = data.drop('Price',axis=1)
+        reg = LinearRegression().fit(data, Price)
+        X = np.array([3,1500,8,40,1000,2,1,0]).reshape(-1,8)
+        
+        price_prediction = reg.predict(X)[0]
+        #Coeff = ['Bedroom', 'Space', 'Room', 'Lot', 'Tax', 'Bathroom', 'Garage','Condition']
+        model_parameters = {"Intercept": reg.intercept_,'Bedroom': reg.coef_[0], 'Space': reg.coef_[1],'Room': reg.coef_[2],'Lot': reg.coef_[3],'Tax': reg.coef_[4],
+        'Bathroom': reg.coef_[5],'Garage': reg.coef_[6],'Condition': reg.coef_[7]}
+        regression_dict = {'model_parameters':model_parameters,'price_prediction':price_prediction}
+        Output = {'summary_dict': summary_dict,'regression_dict': regression_dict}
+        return Output
+
+    def __listwise_deletion(self, data: pd.DataFrame):
+        return data.dropna()
